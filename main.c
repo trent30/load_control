@@ -4,7 +4,7 @@ LiquidCrystal lcd(1, 0, 5, 4, 3, 2);
 
 //~ R1 = 10k  ohms
 //~ R2 = 2.2k ohms
-//~ R = R1 / R2
+//~ en théorie R = R1 / R2 … en pratique :
 float R = 9.81; 
 
 long bt_prog = A0;
@@ -198,10 +198,10 @@ int change_RATIO() {
 	delay(bt_delay);
 	while (value < bt_limit) {
 		if (analogRead(bt_up) > bt_limit) {
-			R += 0.1;
+			R += 0.01;
 		}
 		if (analogRead(bt_down) > bt_limit) {
-			R -= 0.1;
+			R -= 0.01;
 		}
 		display_ratio();
 		delay(bt_delay);
