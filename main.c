@@ -4,8 +4,8 @@ LiquidCrystal lcd(1, 0, 5, 4, 3, 2);
 
 //~ R1 = 10k  ohms
 //~ R2 = 2.2k ohms
-//~ en théorie R = R1 / R2 … en pratique :
-float R = 9.81; 
+//~ en théorie R = ( R1 + R2 ) / R2 = 22.2/2.2 = 10.09 ; en pratique :
+float R = 9.59; 
 
 long bt_prog = A0;
 long bt_up = A1;
@@ -17,12 +17,12 @@ long value;
 float v_input;
 int bt_prog_delay = 2000;
 int bt_delay = 300;
-int bt_limit = 1000;
+int bt_limit = 800;
 int limit_boucle_secu = 30;
 int cpt_loop = 0;
 int cpt_loop_limit = 30;		// le temps entre 2 mesures vaut (en ms):  t = bt_prog_delay * cpt_loop_limit
 								// exemple : 30 * 2000 = 1 minute
-int seuil_nuit = 300;
+int seuil_nuit = 75;
 #define MAX 10
 float tab[MAX]; 				// tableau utilisé pour le calcul de la moyenne lissée : MEAN
 int nb_relais_in = 7;			// nombre de relais utilisés en entrée (pour les panneaux solaires)
