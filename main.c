@@ -28,7 +28,7 @@ int FRIGO_PIN  = 6;
 float MEAN = 12.0;
 float V_IN_MAX = 13.1;			// Si la tension des batteries dépasse ce seuil alors on diminue nb_relais_in
 float V_IN_MIN = 12.8;			// Si la tension des batteries est en dessous de ce seuil alors on augmente nb_relais_in
-float FRIGO_V_MAX = 12.7;		// Si la tension des batteries dépasse ce seuil alors on démarre le frigo
+float FRIGO_V_MAX = 12.8;		// Si la tension des batteries dépasse ce seuil alors on démarre le frigo
 float FRIGO_V_MIN = 12.5;		// Si la tension des batteries est en dessous de ce seuil alors on éteind le frigo
 
 //~ SECURITY
@@ -360,6 +360,7 @@ void loop() {
 			mesure_v_input();
 		}
 	}
+	lcd.begin(16, 2);
 	delay(bt_prog_delay);
 }
 
