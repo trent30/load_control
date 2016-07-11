@@ -14,7 +14,6 @@ long photoresistance1 = A3;
 long photoresistance2 = A4;
 long voltmetre = A5;
 long value;
-float v_input;
 int bt_prog_delay = 2000;
 int bt_delay = 300;
 int bt_limit = 800;
@@ -23,8 +22,6 @@ int cpt_loop = 0;
 int cpt_loop_limit = 30;		// le temps entre 2 mesures vaut (en ms):  t = bt_prog_delay * cpt_loop_limit
 								// exemple : 30 * 2000 = 1 minute
 int seuil_nuit = 75;
-#define MAX 10
-float tab[MAX]; 				// tableau utilisé pour le calcul de la moyenne lissée : MEAN
 int nb_relais_in = 7;			// nombre de relais utilisés en entrée (pour les panneaux solaires)
 int relais_on = 0;				// nombre de relais actuellement fermés
 int FRIGO_PIN  = 6;
@@ -38,29 +35,6 @@ float FRIGO_V_MIN = 12.5;		// Si la tension des batteries est en dessous de ce s
 float MEAN_MAX = 15.0;			// Au delà on coupe tout
 float MEAN_MIN = 10.0;			// Au dessous on coupe tout
 
-
-void display_tab_value(int name, float value) {
-	lcd.clear();
-	lcd.print(name);
-	lcd.print(" : ");
-	lcd.setCursor(0, 1);
-	lcd.print(value);
-}
-
-void add_value(float v) {
-	for ( int i = 0; i < MAX - 1 ; i++) {
-		tab[i] = tab[i+1];
-	}
-	tab[MAX - 1] = v;
-}
-
-float moyenne() {
-	float sum = 0;
-	for ( int i = 0; i < MAX ; i++) {
-		sum += tab[i];
-	}
-	return sum / MAX;
-}
 
 void switch_frigo(int v) {
 	if (v == 1) {
@@ -102,8 +76,6 @@ void display_on_lcd() {
 	lcd.clear();
 	lcd.setCursor(0, 0);
 	lcd.print(MEAN);
-	lcd.print(" ");
-	lcd.print(v_input);
 	lcd.print(" I");
 	lcd.print(long(cpt_loop_limit) * bt_prog_delay / 1000);
 	lcd.print(" ");
@@ -137,10 +109,8 @@ void display_ratio() {
 	lcd.clear();
 	lcd.print("RATIO : ");
 	lcd.print(R);
-	v_input = analogRead(voltmetre);
-	v_input = v_input * 5 * R / 1024;
 	lcd.setCursor(0, 1);
-	lcd.print(v_input);
+	lcd.print(analogRead(voltmetre) * 5 * R / 1024);
 	lcd.print("V");
 }
 
@@ -313,14 +283,38 @@ int change_V_IN_MIN() {
 	return 0;
 }
 
-float mesure_v_input() {
-	int nb_read = 50;
+void mesure_v_input() {
+	int nb_read = 100;
 	float sum = 0;
 	for ( int i = 0; i < nb_read; i++) {
 		sum += analogRead(voltmetre);
-		delay(1);
+		delay(2);
 	}
-	return sum * 5 * R / nb_read / 1024;
+	MEAN = sum * 5 * R / nb_read / 1024;
+	
+	if (MEAN < MEAN_MIN || MEAN > MEAN_MAX) {
+		SECURITE(MEAN);
+	} else {
+		// Si tout va bien on continue
+		
+		// check panneaux
+		if (MEAN > V_IN_MAX && relais_on > 0) {
+			relais_on -= 1;
+		}
+		if (MEAN < V_IN_MIN && relais_on < nb_relais_in) {
+			relais_on += 1;
+		}
+		update_relais();
+		
+		// check frigo
+		if (MEAN > FRIGO_V_MAX) {
+			switch_frigo(1);
+		}
+		if (MEAN < FRIGO_V_MIN) {
+			switch_frigo(0);
+		}
+		
+	}
 }
 
 int lecture_photoresistance() {
@@ -344,9 +338,6 @@ void setup() {
 	switch_frigo(0);
 	relais_on = nb_relais_in;
 	update_relais();
-	for ( int i = 0; i < MAX ; i++) {
-		add_value(mesure_v_input());
-	}
 	cpt_loop = cpt_loop_limit;
 }
 
@@ -366,34 +357,7 @@ void loop() {
 		} else {
 			
 			//~ LECTURE V_INPUT
-			v_input = mesure_v_input();
-			add_value(v_input);
-			MEAN = moyenne();
-			
-			// check MEAN
-			if (MEAN < MEAN_MIN || MEAN > MEAN_MAX) {
-				SECURITE(MEAN);
-			} else {
-				// Si tout va bien on continue
-				
-				// check panneaux
-				if (MEAN > V_IN_MAX && relais_on > 0) {
-					relais_on -= 1;
-				}
-				if (MEAN < V_IN_MIN && relais_on < nb_relais_in) {
-					relais_on += 1;
-				}
-				update_relais();
-				
-				// check frigo
-				if (MEAN > FRIGO_V_MAX) {
-					switch_frigo(1);
-				}
-				if (MEAN < FRIGO_V_MIN) {
-					switch_frigo(0);
-				}
-				
-			}
+			mesure_v_input();
 		}
 	}
 	delay(bt_prog_delay);
