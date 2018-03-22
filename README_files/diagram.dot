@@ -1,0 +1,11 @@
+digraph lc {
+	arduino -> relay;
+	battery->arduino;
+	photovoltaic, relay, battery, arduino [shape=box];
+	photovoltaic -> relay -> { battery fridge };
+	battery-> relay;
+	{rank=same; photovoltaic  relay  battery}
+	{rank=same; fridge "12V CC -> 220V AC"}
+	{rank=same; arduino}
+	battery -> "12V CC -> 220V AC" -> relay;
+}
